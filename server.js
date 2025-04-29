@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
@@ -10,40 +9,52 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// 🔥 Aqui está o usuário atualizado:
+const JWT_SECRET = process.env.JWT_SECRET || 'minhasecretkeyultrasegura';
+
+// Usuário de exemplo
 const users = [
-  { username: "945.443.873-53", password: "1q2w3e4r5t" }
+  {
+    cpf: '945.443.873-53',
+    password: '1q2w3e4r5t',
+  },
 ];
 
-// Rota de login
+// Empresas em memória
+const empresas = [];
+
+// Login
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
+  const { cpf, password } = req.body;
+  const user = users.find((u) => u.cpf === cpf && u.password === password);
 
-  const user = users.find(u => u.username === username && u.password === password);
-
-  if (user) {
-    const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    return res.json({ token });
-  } else {
-    return res.status(401).json({ message: 'CPF ou senha inválidos!' });
+  if (!user) {
+    return res.status(401).json({ message: 'CPF ou senha inválidos.' });
   }
+
+  const token = jwt.sign({ cpf: user.cpf }, JWT_SECRET, { expiresIn: '1h' });
+
+  return res.json({ token });
 });
 
-// (opcional) Rota protegida para testar o token
-app.get('/protected', (req, res) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
+// Cadastro de Empresa
+app.post('/empresa', (req, res) => {
+  const { nome, cnpj } = req.body;
 
-  if (!token) return res.status(401).json({ message: 'Token não fornecido!' });
+  if (!nome || !cnpj) {
+    return res.status(400).json({ message: 'Nome e CNPJ são obrigatórios.' });
+  }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Token inválido!' });
+  empresas.push({ nome, cnpj });
 
-    res.json({ message: 'Acesso autorizado!', user });
-  });
+  console.log('Empresas cadastradas:', empresas); // Para monitorar no console
+  return res.status(201).json({ message: 'Empresa cadastrada com sucesso!' });
 });
 
-// Inicializa o servidor
+// Para testar se está online
+app.get('/', (req, res) => {
+  res.send('API Funcionando!');
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
