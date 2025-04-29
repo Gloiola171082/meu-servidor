@@ -1,7 +1,7 @@
 {
   "name": "meu-servidor",
   "version": "1.0.0",
-  "description": "Servidor de cadastro de empresas",
+  "description": "",
   "main": "server.js",
   "type": "module",
   "scripts": {
